@@ -5,11 +5,44 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <main>
-        <header>Salary Calculator</header>
-        <section class="add-employee"></section>
-        <section class="employee-list"></section>
-        <section class="monthly-total"></section>
+    <main id="main">
+        <header>
+          <h1 class="header-title">Salary Calculator</h1>
+        </header>
+        <section class="add-employee">
+          <h2 class="section-title">Add Employee</h2>
+          <article class="input-form">
+            <form>
+              <input type="text" id="firstName" name="firstName" placeholder="First Name" class="text-input-control">
+              <input type="text" id="lastName" name="lastName" placeholder="Last Name" class="text-input-control">
+              <input type="number" id="id" name="id" placeholder="ID" class="number-input-control">
+              <input type="text" id="title" name="title" placeholder="Title" class="text-input-control">
+              <input type="number" id="annualSalary" name="annualSalary" placeholder="Annual Salary" class="number-input-control">
+              <button type="button" id="submitEmployee" onclick="SubmitEmployee()" class="submit-form-button">Submit</button>
+            </form>
+          </article>
+        </section>
+        <section class="employee-list">
+          <label for="employee-table" class="label">Employees</label>
+          <table id="employeeTable">
+            <thead id="tableHead" class="table-head">
+              <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Annual Salary</th>
+                <th></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+            <tfoot></tfoot>
+          </table>
+        </section>
+        <section class="monthly-total">
+          <h2>Total Monthly: <span id="monthlyTotal"></span></h2>
+        </section>
     </main>
-    <script defer src="index.js"></script>
+    <script src="index.js" type="text/javascript"></script>
 </body>
