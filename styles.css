@@ -97,3 +97,21 @@ tr:nth-child(even) {
     width: clamp(5rem, 80px, 100%);
     margin: 0 3rem 0 3rem;
 }
+
+#warning:not(:empty) {
+    margin: 1rem;
+    border: 0.25rem solid var(--pomegranate);
+    border-radius: 0.25rem;
+}
+
+.warning-header {
+    padding: 0 0 1rem 1rem;
+    font-weight: 800;
+    color: var(--pomegranate);
+}
+
+.warning-text {
+    padding: 0 0 1rem 1rem;
+    font-weight: 400;
+    color: var(--midnight-blue);
+}

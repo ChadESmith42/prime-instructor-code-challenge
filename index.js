@@ -1,5 +1,8 @@
-// Starting dataset - would come via API call in prod;
-const employees = [
+// Starting dataset;
+// Notice the money values are based on CENTS, not dollars. This makes more sense (no pun intended) for
+// larger apps. I did it out of habit. It adds some complexity, especially as the wire frames require special
+// formatting. In a "modern" framework (like Angular), there are built-in functions to transform numbers into currency.
+const employees = new Array(
     {
         FirstName: "Jen",
         LastName: "Barber",
@@ -21,148 +24,176 @@ const employees = [
         Title: "Quality Assurance",
         AnnualSalary: 4800000
     }
-];
+);
 
 // Set some 'global' constants for document:
-const table = document.getElementById('employeeTable');
-const tableBody = document.getElementById('tableBody');
-const totalSalary = document.getElementById('monthlyTotal');
-
+const table = document.getElementById("employeeTable");
+const tableBody = document.getElementById("tableBody");
+const totalSalary = document.getElementById("monthlyTotal");
+const warning = document.getElementById("warning");
 const maxSalary = 2000000; // $20,000.00 as pennies!
 
 // execute main function on load;
-main();
+window.onload = () => {
+    DisplayPage();
+}
 
-function main() {
-    DrawTable();
+
+// This function displays or refreshes the page. It's sole purpose is to
+// ensure the page displays correctly. To do that, it must call several
+// functions.
+function DisplayPage() {
+    tableBody.innerHTML = ""; // Reset table for data refresh!
+    DisplayTable();
+    FormatAnnualSalary();
     DisplayTotalSalary(employees);
 }
 
-// Create a new Employee object in the table;
+//#region Handle Employee Data
+
+// Add new employee to employees array (data);
 function SubmitEmployee() {
-    const data = GetFormData();
+    const data = NewEmployeeFromForm();
     AddEmployeeToList(data);
-    DrawTable();
+   DisplayPage();
 }
 
-function GetFormData() {
+// Create employee object from form values;
+function NewEmployeeFromForm() {
     const firstName = document.getElementById("firstName").value;
-    console.log("First Name: ", firstName);
     const lastName = document.getElementById("lastName").value;
     const id = document.getElementById("id").value;
     const title = document.getElementById("title").value;
-    const annualSalary = document.getElementById("annualSalary").value;
+    const annualSalary = LaunderMoney(document.getElementById("annualSalary").value);
 
-    const employee = new Employee(firstName, lastName, id, title, annualSalary);
-    return employee;
+    return new Employee(firstName, lastName, id, title, annualSalary);
 }
 
+// Add employee object to employees array;
 function AddEmployeeToList(employee) {
     if (employee.Id) {
         employees.push(employee);
     }
 }
 
-function DrawTable() {
-
+// Remove employee from records
+function DeleteEmployeeRecord(employeeId) {
+    let index = employees.findIndex(employee => employee.Id === employeeId);
+    employees.splice(index, 1);
 }
 
-function DrawEmployeeList(employeeList) {
+//#endregion Handle Employee Data
+
+//#region Inject Table Data into DOM
+
+// Create the rows for the table;
+function DisplayTable() {
+    for (const employee of employees) {
+        const newRow = tableBody.insertRow();
+        newRow.className = "employee";
+        const data = Object.values(employee);
+        for (const datum of data) {
+            const cell = newRow.insertCell();
+            cell.innerHTML = datum;
+        }
+        const deleteButton = newRow.insertCell();
+        deleteButton.appendChild(AddDeleteButton(employee.Id));
+    }
 }
 
-function DrawEmployeeRow(employee, index) {}
+// Format the annual salary in the table as US currency;
+function FormatAnnualSalary() {
+    const employees = document.getElementsByClassName("employee"); // Get rows with employee data;
+    let salary; // holder variable for table cell;
+    for (const employee of employees) {
+        salary = employee.childNodes[4]; // Cell reference by index;
+        const amount = salary.innerText;
+        if (amount.toString().indexOf("$") === -1) { // If the salary is not already formatted ...
+            salary.innerText = FormatUSDollars(amount);
+        }
+    }
+}
 
+// Just in case a user decides to get fancy with the input, this function
+// filters the amount and only returns the numeric characters.
+function LaunderMoney(amount) {
+    const numbers = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+   for (i = 0; i < amount.length, i++;) {
+        let check = amount[i]; // Get the character
+        if (!numbers.includes(check)) { // If it's not a number ...
+            amount.splice(i, 1); // Remove it from the value
+        }
+   }
+   return Math.floor(amount); // Revert amount from array to number;
+}
+
+// Create delete button that references the employee record by employeeId
+function AddDeleteButton(employeeId) {
+    const button = document.createElement("input");
+    button.type = "button";
+    button.className = "delete-button";
+    button.id = `deleteEmployee-${employeeId}`;
+    button.value = "Delete";
+    button.onclick = () => { // Notice this doesn't appear in the HTML, unlike the "Submit" button
+        DeleteEmployeeRecord(employeeId);
+        DisplayPage();
+    }
+    return button;
+}
+
+//#endregion Inject Table Data into DOM
+
+//#region Total Salaries
+
+// Core function for calculator
 function DisplayTotalSalary(employees) {
     let salary = TotalMonthlySalary(employees);
-    salary = FormatSalary(salary);
-    document.getElementById('monthlyTotal').innerText = salary;
+    DisplayWarning(salary);
+    salary = FormatUSDollars(salary);
+    document.getElementById("monthlyTotal").innerText = salary;
 }
 
-// Total all salaries.
-function TotalMonthlySalary(employeeList) {
+// Display the warning message that the maximum monthly salary has been exceeded.
+function DisplayWarning(totalSalary) {
+    warning.innerHTML = "";
+    if (maxSalary <= totalSalary) {
+        AddWarningMessage();
+    }
+}
+
+// Total all salaries from employee array;
+function TotalMonthlySalary(employees) {
     let total = 0;
-    for (let employee of employeeList) {
+    for (let employee of employees) {
         total += employee.AnnualSalary;
     }
-    // Returns precise average, can have more than 2 decimal places!
     return (total / 12);
 }
 
-// Format salary into dollar format. Works in evergreen browsers.
-function FormatSalary(salary) {
-    return '$' + (salary / 100).toLocaleString('en-US',
+// Inject the Warning Message into the DOM;
+function AddWarningMessage() {
+    const warning = document.getElementById("warning");
+    warning.innerHTML = `
+    <h3 class="warning-header">Monthly Salary of $20,000 Exceeded!</h3>
+    <p class="warning-text">
+        The total monthly salary exceeds the limit of $20,000.
+    </p>
+    `;
+}
+
+// Format salary into dollar format.
+function FormatUSDollars(salary) {
+    return `$${(salary / 100).toLocaleString("en-US",
         {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }
-    );
+    )}`;
 }
 
+//#endregion Total Salaries
 
-// // Create the table from employee data
-// function DrawTable() {
-//     const table = document.getElementById('employeeTable');
-//     const rows = table.rows;
-//     console.log(rows);
-//     console.log(table);
-//     table.remove(rows);
-//     for (let index = 0; index < employees.length; index++) {
-//         // Don't redraw existing rows
-//         let createNewRow = document.getElementById(`row-${index}`) ? false : true;
-//         if (createNewRow) {
-//             table.insertRow(index);
-//             let newRow = DrawRow(employees[index], index);
-//             newRow.setAttribute("id", `row-${index}`);
-//             table.appendChild(newRow);
-//         }
-//     }
-// }
-
-// function DrawRow(employee, index) {
-//     let row = document.createElement("tr");
-//     row.setAttribute("id", `employee-${employee.Id}`)
-//     let emps = new Map(Object.entries(employee));
-//     for (let e of emps) {
-//         const cell = row.insertCell();
-//         cell.innerHTML = e[1];
-//     }
-//     let deleteCell = row.insertCell();
-//     deleteCell.id = "delete-button-cell";
-//     const button = document.createElement("input");
-//     button.type = "button";
-//     button.className = "delete-button";
-//     button.id = `deleteEmployee-${index}`;
-//     button.value = "Delete";
-//     button.onclick = () => {
-//         return DeleteTableRow(index);
-//     }
-//     deleteCell.append(button);
-//     return row;
-// }
-
-// function DeleteTableRow(index) {
-//    let row = document.getElementById(`row-${index}`);
-//    if (row) {
-//        const table = document.getElementById("employeeTable");
-//        table.removeChild(row);
-//    }
-//    const fired = employees.indexOf(emp => { `employee-${emp.Id}` === row.id });
-//    employees.splice(fired, 1);
-//    console.log(employees);
-// }
-
-// function totalSalary() {
-//     let salaries = (employees) => {
-//         const s = [];
-//         employees.map((key, value) => {
-//             if (key === "annualSalary") {
-//                 s.push(value);
-//             }
-//         });
-//     }
-//     return salaries.s;
-// }
-
+// Employee class for creating new records. (It's a habit from too much Typescript!)
 class Employee {
     constructor(firstName, lastName, id, title, annualSalary) {
         this.FirstName = firstName;
